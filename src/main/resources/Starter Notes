@@ -1,0 +1,104 @@
+This starter package consists of:
+1. Pre-configured maven to build war with dependencies.
+Notes:
+	1. Always try to follow constructor level dependency injection.
+
+2. Pre-configured log4j
+
+3. Pre-configured data-source in Persistance config called jdbc/CCUIDB to be picked up from jndi -> web xml
+
+4. JPA:
+========
+	Sample STARTER_PERSON Entity
+	Table create Script
+	Sample persons DML Script
+	Service-class
+	Repository-class
+
+5. Entity Audit using Hibernate Envers
+======================================
+	Add Tables given in script
+	Create an entity class for RevInfo, otherwise you eill need to create another sequence called hibernate_sequence.
+	set hibernate properties to:
+	hibernateProperties.setProperty("org.hibernate.envers.audit_table_suffix", "_AUDIT_LOG"); 
+	
+	This will create the log in <TABLE_NAME>_AUDIT_LOG table
+	Sample tables are there in the script file for STARTER_PERSON table along with the REVINFO table.
+	REVINFO table should be common for all tables to be audited.
+	
+	Refer https://www.baeldung.com/database-auditing-jpa (Envers portion)	
+
+6. Exception Handling.
+======================
+	1. Create a custom exception - In this case StarterCustomException
+		The exception should contain http exception code, custom internal code to identify the error, message
+		
+	2. All exceptions should be caught and if cannot be handled, custom exceptions should be thrown and handled through @ControllerAdvice
+		Provided one example for the same.
+
+7. Event Handling
+==================
+	Check the event Project. Events can be Synchronous and Asynchronous.
+	To see how event is raised see the test-event method in the controller.
+	
+8. Caching:
+===========
+ 	We have used EHCache
+ 	a. - POM Change - 
+ 			<dependency>
+				<groupId>net.sf.ehcache</groupId>
+				<artifactId>ehcache</artifactId>
+				<!--<version>2.10.9.2</version>-->		
+			</dependency>
+		
+		- @EnableCaching
+		- define CacheManager and EhCacheManagerFactoryBean beans in config
+	b. Create a sample cache in ehCache.xml called starterConfigCache to cache config data.
+	c. Cache will build incrementally. Once a value is accessed, it is cached.
+	d. First a starter cache manager is created which will use the starterConfigCache to cache the config value.
+	   It will get the config value from the config repository, if it is not already in cache.
+	e. The config service will always ask the cache manager for the config value and will not directly call the repository.
+	f. Follow the CACHE TRACKER testConfig method in the controller.
+
+9. Managing cache:
+==================
+ 	- get all cache details
+ 	- get a particular cache details
+ 	- clear all cache
+ 	- clear a particular cache
+ 	- Refer to the controller for cache related functions
+ 
+10. Request Scoped Bean:
+========================
+ 	- Request scope bean is a very good way to audit request.
+ 	- Implementation:
+ 		- Create the bean
+ 		- Init in config
+ 		- Have post create and pre destroy to initialize and logging
+ 		- Sample Starter request bean has been implemented for many of the requests here with CommonFunctions class.
+ 		
+11. Synchronization across VMs
+==============================
+
+ WITH FILE:
+ ----------
+ - The best way to synchronize across VMs is through a common file in a shared directory.
+ - In StarterFileSynchronization a simple example to print the string and the long job is simulated with a 5 sec sleep.
+ - You can initiate two calls to the /starter-test/syncro/{toPrint} to see it work.
+ 
+ WITH DB:
+ --------
+ - Create table STARTER_THREAD_SYNC with following columns (Script available in Script file):
+ 
+ SYNC_PK - A number PK 
+ V_LOCK_NAME - Lock name. Each sync functionality will have one lock each
+ V_THREAD_NAME - Name or identifier of the current thread
+ C_SYNC_LOCK_STAUS - Status of the Thread - 'Y' = Locked, 'N' = Not locked
+ 
+ A thread can only run if it can update the lock row with its own thread name and status as 'Y' when the status is 'N'
+ If another thread is running the status will be 'Y' and this thread will not be able to update and hence will wait.
+ After successful update the thread can now run.
+ When the thread completes its task it will update the status as 'N' and thread name as null. This will enable one of the other waiting thread to update the row and proceed with execution of its task.
+ 
+ 
+ 

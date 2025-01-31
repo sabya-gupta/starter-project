@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN	">
+	<Properties>
+		<Property name="basePath">/home/wladmin/PESTOS_DISB_LOG_DIR/pestos-disb
+		</Property>
+		<Property name="formatMsgNoLookups">true</Property>
+	</Properties>
+
+	<Appenders>
+		<RollingFile name="LogToRollingFile"
+			fileName="${basePath}/pestos-disb.log"
+			filePattern="${basePath}/pestos-disb-%d{yyyy-MM-dd}-%i.log">
+			<PatternLayout>
+				<pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n
+				</pattern>
+			</PatternLayout>
+			<Policies>
+				<OnStartupTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="20 MB" />
+				<TimeBasedTriggeringPolicy interval="1"
+					modulate="true" />
+			</Policies>
+			<DefaultRolloverStrategy max="100">
+				<!-- Nested conditions: the inner condition is only evaluated on files 
+					for which the outer conditions are true. -->
+				<Delete basePath="${baseDir}" maxDepth="2">
+					<IfFileName glob="*/pestos-disb-*.log">
+						<IfLastModified age="60d">
+							<IfAny>
+								<IfAccumulatedFileSize exceeds="100 GB" />
+								<IfAccumulatedFileCount exceeds="10" />
+							</IfAny>
+						</IfLastModified>
+					</IfFileName>
+				</Delete>
+			</DefaultRolloverStrategy>
+		</RollingFile>
+		<Console name="LogToConsole" target="SYSTEM_OUT">
+			<PatternLayout
+				pattern="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n" />
+		</Console>
+	</Appenders>
+	<Loggers>
+		<Logger name="com.maybank.pestos.disbursement" level="debug"
+			additivity="false">
+			<appender-ref ref="LogToRollingFile" />
+			<appender-ref ref="LogToConsole" />
+		</Logger>
+		<Root level="error" additivity="false">
+			<appender-ref ref="LogToRollingFile" />
+			<appender-ref ref="LogToConsole" />
+		</Root>
+	</Loggers>
+</Configuration>
